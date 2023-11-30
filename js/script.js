@@ -4,6 +4,16 @@ const API_URL = "https://api.themoviedb.org/3/";
 const IMAGE_URL = "https://image.tmdb.org/t/p/original";
 const API_KEY = "cf54935f8d3b7085181cfd876fcb3966";
 const popularMoviesCards = document.getElementsByClassName("card");
+const spinner = document.querySelector(".spinner");
+
+const showSpinner = () => {
+  console.log(spinner);
+  spinner.classList.add("show");
+};
+
+const hideSpinner = () => {
+  spinner.classList.remove("show");
+};
 
 const highlightLink = () => {
   for (const link of links) {
@@ -13,6 +23,7 @@ const highlightLink = () => {
 
 const getData = async (page) => {
   try {
+    showSpinner();
     const response = await fetch(API_URL + page + "?api_key=" + API_KEY);
 
     if (!response.ok) {
@@ -20,6 +31,7 @@ const getData = async (page) => {
     }
 
     const data = await response.json();
+    hideSpinner();
 
     return data;
   } catch (error) {
@@ -52,10 +64,8 @@ const fillCard = (card, data) => {
 
 const getAndFillPopularMovies = async () => {
   const movies = await getData("movie/popular");
-  console.log(movies);
   for (let i = 0; i < popularMoviesCards.length; i++) {
     fillCard(popularMoviesCards[i], movies.results[i]);
-    console.log(popularMoviesCards[i]);
   }
 };
 
