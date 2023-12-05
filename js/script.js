@@ -22,6 +22,7 @@ const highlightLink = () => {
 };
 
 const getData = async (page) => {
+  console.log(currentPage);
   try {
     showSpinner();
     const response = await fetch(API_URL + page + "?api_key=" + API_KEY);
@@ -97,6 +98,7 @@ const init = () => {
       getAndFillPopularMovies();
       break;
     case "/shows.html":
+    case "/shows":
       getAndFillPopularShows();
       break;
     case "/movie-details.html":
