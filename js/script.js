@@ -3,7 +3,7 @@ const links = document.getElementsByClassName("nav-link");
 const API_URL = "https://api.themoviedb.org/3/";
 const IMAGE_URL = "https://image.tmdb.org/t/p/original";
 const API_KEY = "cf54935f8d3b7085181cfd876fcb3966";
-const popularMoviesCards = document.getElementsByClassName("card");
+const popularCards = document.getElementsByClassName("card");
 const spinner = document.querySelector(".spinner");
 
 const showSpinner = () => {
@@ -49,7 +49,7 @@ const formattedDate = (inputDateString) => {
   return `${day}/${month}/${year}`;
 };
 
-const fillCard = (card, data) => {
+const fillMovieCard = (card, data) => {
   const image = card.firstElementChild;
   image.setAttribute("href", "movie-details.html?id=" + data.id);
   const imagePath = data.poster_path
@@ -64,8 +64,29 @@ const fillCard = (card, data) => {
 
 const getAndFillPopularMovies = async () => {
   const movies = await getData("movie/popular");
-  for (let i = 0; i < popularMoviesCards.length; i++) {
-    fillCard(popularMoviesCards[i], movies.results[i]);
+  for (let i = 0; i < popularCards.length; i++) {
+    fillMovieCard(popularCards[i], movies.results[i]);
+  }
+};
+
+const fillShowCard = (card, data) => {
+  console.log(data);
+  const image = card.firstElementChild;
+  image.setAttribute("href", "tv-details.html?id=" + data.id);
+  const imagePath = data.poster_path
+    ? IMAGE_URL + data.poster_path
+    : "images/no-image.jpg";
+  image.firstElementChild.setAttribute("src", IMAGE_URL + imagePath);
+  image.firstElementChild.setAttribute("alt", data.original_title);
+  card.children[1].firstElementChild.innerHTML = data.name;
+  card.children[1].children[1].firstElementChild.innerHTML =
+    "Release: " + formattedDate(data.first_air_date);
+};
+
+const getAndFillPopularShows = async () => {
+  const shows = await getData("tv/popular");
+  for (let i = 0; i < popularCards.length; i++) {
+    fillShowCard(popularCards[i], shows.results[i]);
   }
 };
 
@@ -76,7 +97,7 @@ const init = () => {
       getAndFillPopularMovies();
       break;
     case "/shows.html":
-      console.log("shows");
+      getAndFillPopularShows();
       break;
     case "/movie-details.html":
       console.log("movie details");
