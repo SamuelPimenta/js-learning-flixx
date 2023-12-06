@@ -4,10 +4,10 @@ const API_URL = "https://api.themoviedb.org/3/";
 const IMAGE_URL = "https://image.tmdb.org/t/p/original";
 const API_KEY = "cf54935f8d3b7085181cfd876fcb3966";
 const popularCards = document.getElementsByClassName("card");
+const movieDetailsDiv = document.getElementById("movie-details");
 const spinner = document.querySelector(".spinner");
 
 const showSpinner = () => {
-  console.log(spinner);
   spinner.classList.add("show");
 };
 
@@ -22,7 +22,6 @@ const highlightLink = () => {
 };
 
 const getData = async (page) => {
-  console.log(currentPage);
   try {
     showSpinner();
     const response = await fetch(API_URL + page + "?api_key=" + API_KEY);
@@ -49,13 +48,14 @@ const formattedDate = (inputDateString) => {
 
   return `${day}/${month}/${year}`;
 };
+const getImagePath = (maybeData) => {
+  return maybeData ? IMAGE_URL + maybeData : "images/no-image.jpg";
+};
 
 const fillMovieCard = (card, data) => {
   const image = card.firstElementChild;
   image.setAttribute("href", "movie-details.html?id=" + data.id);
-  const imagePath = data.poster_path
-    ? IMAGE_URL + data.poster_path
-    : "images/no-image.jpg";
+  const imagePath = getImagePath(data.poster_path);
   image.firstElementChild.setAttribute("src", IMAGE_URL + imagePath);
   image.firstElementChild.setAttribute("alt", data.original_title);
   card.children[1].firstElementChild.innerHTML = data.original_title;
@@ -71,12 +71,9 @@ const getAndFillPopularMovies = async () => {
 };
 
 const fillShowCard = (card, data) => {
-  console.log(data);
   const image = card.firstElementChild;
   image.setAttribute("href", "tv-details.html?id=" + data.id);
-  const imagePath = data.poster_path
-    ? IMAGE_URL + data.poster_path
-    : "images/no-image.jpg";
+  const imagePath = getImagePath(data.poster_path);
   image.firstElementChild.setAttribute("src", IMAGE_URL + imagePath);
   image.firstElementChild.setAttribute("alt", data.original_title);
   card.children[1].firstElementChild.innerHTML = data.name;
@@ -90,11 +87,83 @@ const getAndFillPopularShows = async () => {
     fillShowCard(popularCards[i], shows.results[i]);
   }
 };
+const getGenres = (data) => {
+  let genres = "";
+  for (const genre of data) {
+    genres = genres + `<li>${genre.name}</li>`;
+  }
+  return genres;
+};
+const getProductionCompanies = (data) => {
+  let productionCompanies = "";
+  for (const productionCompany of data) {
+    productionCompanies = productionCompanies + `${productionCompany.name}, `;
+  }
+  return productionCompanies.slice(0, -2);
+};
+const fillMovieDetails = (data) => {
+  const newDiv = document.createElement("div");
+  newDiv.innerHTML = `
+  <div class="details-top">
+          <div>
+            <img
+              src=${getImagePath(data.poster_path)}
+              class="card-img-top"
+              alt=${data.original_title}
+            />
+          </div>
+          <div>
+            <h2>${data.original_title}</h2>
+            <p>
+              <i class="fas fa-star text-primary"></i>
+              ${data.vote_average.toFixed(1)} / 10
+            </p>
+            <p class="text-muted">Release Date: ${formattedDate(
+              data.release_date
+            )}</p>
+            <p>
+            ${data.overview}
+            </p>
+            <h5>Genres</h5>
+            <ul class="list-group">
+            ${getGenres(data.genres)}
+            </ul>
+            <a href=${
+              data.homepage
+            } target="_blank" class="btn">Visit Movie Homepage</a>
+          </div>
+        </div>
+        <div class="details-bottom">
+          <h2>Movie Info</h2>
+          <ul>
+            <li><span class="text-secondary">Budget:</span> $${data.budget.toLocaleString()}</li>
+            <li><span class="text-secondary">Revenue:</span> $${data.revenue.toLocaleString()}</li>
+            <li><span class="text-secondary">Runtime:</span> ${
+              data.runtime
+            } minutes</li>
+            <li><span class="text-secondary">Status:</span> ${data.status}</li>
+          </ul>
+          <h4>Production Companies</h4>
+          <div class="list-group">${getProductionCompanies(
+            data.production_companies
+          )}</div>
+        </div>`;
+
+  movieDetailsDiv.appendChild(newDiv);
+};
+
+const getAndFillMovieDetails = async () => {
+  const searchParams = new URLSearchParams(window.location.href);
+  const movieId = searchParams.values().next().value;
+  const movieDetails = await getData("movie/" + movieId);
+  fillMovieDetails(movieDetails);
+};
 
 const init = () => {
   switch (currentPage) {
     case "/":
     case "/index.html":
+    case "/index":
       getAndFillPopularMovies();
       break;
     case "/shows.html":
@@ -102,7 +171,8 @@ const init = () => {
       getAndFillPopularShows();
       break;
     case "/movie-details.html":
-      console.log("movie details");
+    case "/movie-details":
+      getAndFillMovieDetails();
       break;
     case "/tv-details.html":
       console.log("tv details");
