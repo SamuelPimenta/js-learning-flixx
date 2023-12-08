@@ -5,6 +5,7 @@ const IMAGE_URL = "https://image.tmdb.org/t/p/original";
 const API_KEY = "cf54935f8d3b7085181cfd876fcb3966";
 const popularCards = document.getElementsByClassName("card");
 const movieDetailsDiv = document.getElementById("movie-details");
+const showDetailsDiv = document.getElementById("show-details");
 const spinner = document.querySelector(".spinner");
 
 const showSpinner = () => {
@@ -152,11 +153,77 @@ const fillMovieDetails = (data) => {
   movieDetailsDiv.appendChild(newDiv);
 };
 
+const fillBackgroundImage = (imagePath) => {
+  const divForBackground = document.createElement("div");
+  divForBackground.classList.add("custom-background");
+  divForBackground.style.backgroundImage = `url('${IMAGE_URL}${imagePath}')`;
+  document.body.appendChild(divForBackground);
+};
+
 const getAndFillMovieDetails = async () => {
   const searchParams = new URLSearchParams(window.location.href);
   const movieId = searchParams.values().next().value;
   const movieDetails = await getData("movie/" + movieId);
+  fillBackgroundImage(movieDetails.backdrop_path);
   fillMovieDetails(movieDetails);
+};
+
+const fillShowDetails = (data) => {
+  const newDiv = document.createElement("div");
+  newDiv.innerHTML = `<div class="details-top">
+  <div>
+    <img
+    src=${getImagePath(data.poster_path)}
+    class="card-img-top"
+    alt=${data.original_name}
+    />
+  </div>
+  <div>
+    <h2>${data.original_name}</h2>
+    <p>
+      <i class="fas fa-star text-primary"></i>
+      ${data.vote_average.toFixed(1)} / 10
+    </p>
+    <p class="text-muted">Release Date: ${formattedDate(
+      data.first_air_date
+    )}</p>
+    <p>
+    ${data.overview}
+    </p>
+    <h5>Genres</h5>
+    <ul class="list-group">
+    ${getGenres(data.genres)}
+    </ul>
+    <a href=${data.homepage} target="_blank" class="btn">Visit Show Homepage</a>
+  </div>
+</div>
+<div class="details-bottom">
+  <h2>Show Info</h2>
+  <ul>
+    <li><span class="text-secondary">Number Of Episodes:</span> ${
+      data.number_of_episodes
+    }</li>
+    <li>
+      <span class="text-secondary">Last Episode To Air:</span> ${
+        data.last_episode_to_air.name
+      }
+    </li>
+    <li><span class="text-secondary">Status:</span> ${data.status}</li>
+  </ul>
+  <h4>Production Companies</h4>
+  <div class="list-group">${getProductionCompanies(
+    data.production_companies
+  )}</div>
+</div>`;
+  showDetailsDiv.appendChild(newDiv);
+};
+
+const getAndFillShowDetails = async () => {
+  const searchParams = new URLSearchParams(window.location.href);
+  const showId = searchParams.values().next().value;
+  const showDetails = await getData("tv/" + showId);
+  fillBackgroundImage(showDetails.backdrop_path);
+  fillShowDetails(showDetails);
 };
 
 const init = () => {
@@ -175,7 +242,8 @@ const init = () => {
       getAndFillMovieDetails();
       break;
     case "/tv-details.html":
-      console.log("tv details");
+    case "/tv-details":
+      getAndFillShowDetails();
       break;
     case "/search.html":
       console.log("search");
