@@ -4,6 +4,7 @@ const API_URL = "https://api.themoviedb.org/3/";
 const IMAGE_URL = "https://image.tmdb.org/t/p/original";
 const API_KEY = "cf54935f8d3b7085181cfd876fcb3966";
 const popularCards = document.getElementsByClassName("card");
+const searchResultCardsContainer = document.getElementById("search-results");
 const movieDetailsDiv = document.getElementById("movie-details");
 const showDetailsDiv = document.getElementById("show-details");
 const spinner = document.querySelector(".spinner");
@@ -32,6 +33,26 @@ const getData = async (page) => {
     }
 
     const data = await response.json();
+    hideSpinner();
+
+    return data;
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+};
+
+const getSearchData = async (type, searchTerm) => {
+  try {
+    showSpinner();
+    const response = await fetch(
+      `${API_URL}search/${type}?query=${searchTerm}&include_adult=false&language=en-US&page=1&api_key=${API_KEY}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+
     hideSpinner();
 
     return data;
@@ -105,8 +126,8 @@ const fillMovieCard = (card, data) => {
   image.setAttribute("href", "movie-details.html?id=" + data.id);
   const imagePath = getImagePath(data.poster_path);
   image.firstElementChild.setAttribute("src", IMAGE_URL + imagePath);
-  image.firstElementChild.setAttribute("alt", data.original_title);
-  card.children[1].firstElementChild.innerHTML = data.original_title;
+  image.firstElementChild.setAttribute("alt", data.title);
+  card.children[1].firstElementChild.innerHTML = data.title;
   card.children[1].children[1].firstElementChild.innerHTML =
     "Release: " + formattedDate(data.release_date);
 };
@@ -123,7 +144,7 @@ const fillShowCard = (card, data) => {
   image.setAttribute("href", "tv-details.html?id=" + data.id);
   const imagePath = getImagePath(data.poster_path);
   image.firstElementChild.setAttribute("src", IMAGE_URL + imagePath);
-  image.firstElementChild.setAttribute("alt", data.original_title);
+  image.firstElementChild.setAttribute("alt", data.title);
   card.children[1].firstElementChild.innerHTML = data.name;
   card.children[1].children[1].firstElementChild.innerHTML =
     "Release: " + formattedDate(data.first_air_date);
@@ -157,11 +178,11 @@ const fillMovieDetails = (data) => {
             <img
               src=${getImagePath(data.poster_path)}
               class="card-img-top"
-              alt=${data.original_title}
+              alt=${data.title}
             />
           </div>
           <div>
-            <h2>${data.original_title}</h2>
+            <h2>${data.title}</h2>
             <p>
               <i class="fas fa-star text-primary"></i>
               ${data.vote_average.toFixed(1)} / 10
@@ -222,11 +243,11 @@ const fillShowDetails = (data) => {
     <img
     src=${getImagePath(data.poster_path)}
     class="card-img-top"
-    alt=${data.original_name}
+    alt=${data.name}
     />
   </div>
   <div>
-    <h2>${data.original_name}</h2>
+    <h2>${data.name}</h2>
     <p>
       <i class="fas fa-star text-primary"></i>
       ${data.vote_average.toFixed(1)} / 10
@@ -273,6 +294,49 @@ const getAndFillShowDetails = async () => {
   fillShowDetails(showDetails);
 };
 
+const fillSearchCards = (type, results) => {
+  results.forEach((result) => {
+    const newDiv = document.createElement("div");
+    newDiv.classList.add("card");
+    newDiv.innerHTML = `
+    <a href=>
+            <img src= ${getImagePath(result.poster_path)}
+            class="card-img-top" alt=${
+              type === "movie" ? result.title : result.name
+            }/>
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">${
+              type === "movie" ? result.title : result.name
+            }</h5>
+            <p class="card-text">
+              <small class="text-muted">Release: ${
+                type === "movie"
+                  ? formattedDate(result.release_date)
+                  : formattedDate(result.first_air_date)
+              }</small>
+            </p>
+            `;
+    searchResultCardsContainer.appendChild(newDiv);
+  });
+};
+
+const getAndFillSearch = async () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const searchType = searchParams.get("type");
+  const searchTerm = searchParams.get("search-term");
+
+  if (searchTerm && searchTerm !== "") {
+    const { page, results, total_pages } = await getSearchData(
+      searchType,
+      searchTerm
+    );
+    fillSearchCards(searchType, results);
+  } else {
+    alert("Please enter a search term");
+  }
+};
+
 const init = () => {
   switch (currentPage) {
     case "/":
@@ -294,7 +358,8 @@ const init = () => {
       getAndFillShowDetails();
       break;
     case "/search.html":
-      console.log("search");
+    case "/search":
+      getAndFillSearch();
       break;
   }
   highlightLink();
