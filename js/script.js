@@ -295,11 +295,15 @@ const getAndFillShowDetails = async () => {
 };
 
 const fillSearchCards = (type, results) => {
-  results.forEach((result) => {
-    const newDiv = document.createElement("div");
-    newDiv.classList.add("card");
-
-    newDiv.innerHTML = `
+  if (results.length === 0) {
+    const noResultsDiv = document.createElement("div");
+    noResultsDiv.innerHTML = "<h2>Nothing found</h2>";
+    searchResultCardsContainer.appendChild(noResultsDiv);
+  } else {
+    results.forEach((result) => {
+      const newDiv = document.createElement("div");
+      newDiv.classList.add("card");
+      newDiv.innerHTML = `
     <a href= ${type + "-details.html?id=" + result.id}>
             <img src= ${getImagePath(result.poster_path)}
             class="card-img-top" alt=${
@@ -318,8 +322,9 @@ const fillSearchCards = (type, results) => {
               }</small>
             </p>
             `;
-    searchResultCardsContainer.appendChild(newDiv);
-  });
+      searchResultCardsContainer.appendChild(newDiv);
+    });
+  }
 };
 
 const getAndFillSearch = async () => {
