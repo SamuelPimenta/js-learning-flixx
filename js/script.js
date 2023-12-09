@@ -53,6 +53,53 @@ const getImagePath = (maybeData) => {
   return maybeData ? IMAGE_URL + maybeData : "images/no-image.jpg";
 };
 
+const initSwiper = () => {
+  const swiper = new Swiper(".swiper", {
+    slidesPerView: 1,
+    spaceBetween: 30,
+    freeMode: true,
+    loop: true,
+    autoplay: {
+      delay: 4000,
+      dsableOnInteraction: false,
+    },
+    breakpoints: {
+      500: {
+        slidesPerView: 2,
+      },
+      700: {
+        slidesPerView: 3,
+      },
+      1200: {
+        slidesPerView: 4,
+      },
+    },
+  });
+};
+
+const getNowPlayingMoviesInSlider = async () => {
+  const { results } = await getData("movie/now_playing");
+
+  results.forEach((result) => {
+    const newDiv = document.createElement("div");
+    newDiv.classList.add("swiper-slide");
+
+    newDiv.innerHTML = `
+      <a href="movie-details.html?id=${result.id}">
+        <img src=${IMAGE_URL + result.poster_path} alt=${result.title} />
+      </a>
+      <h4 class="swiper-rating">
+        <i class="fas fa-star text-secondary"></i> 
+        ${result.vote_average.toFixed(1)} / 10
+      </h4>
+    `;
+
+    document.querySelector(".swiper-wrapper").appendChild(newDiv);
+
+    initSwiper();
+  });
+};
+
 const fillMovieCard = (card, data) => {
   const image = card.firstElementChild;
   image.setAttribute("href", "movie-details.html?id=" + data.id);
@@ -231,6 +278,7 @@ const init = () => {
     case "/":
     case "/index.html":
     case "/index":
+      getNowPlayingMoviesInSlider();
       getAndFillPopularMovies();
       break;
     case "/shows.html":
