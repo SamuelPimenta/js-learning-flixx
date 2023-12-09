@@ -298,8 +298,9 @@ const fillSearchCards = (type, results) => {
   results.forEach((result) => {
     const newDiv = document.createElement("div");
     newDiv.classList.add("card");
+
     newDiv.innerHTML = `
-    <a href=>
+    <a href= ${type + "-details.html?id=" + result.id}>
             <img src= ${getImagePath(result.poster_path)}
             class="card-img-top" alt=${
               type === "movie" ? result.title : result.name
