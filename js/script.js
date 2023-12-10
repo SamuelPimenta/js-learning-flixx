@@ -8,6 +8,10 @@ const searchResultCardsContainer = document.getElementById("search-results");
 const movieDetailsDiv = document.getElementById("movie-details");
 const showDetailsDiv = document.getElementById("show-details");
 const spinner = document.querySelector(".spinner");
+let currentSearchPage = 1;
+let currentMaxPage = 1;
+let currentSearchTerm = "";
+let currentSearchType = "";
 
 const showSpinner = () => {
   spinner.classList.add("show");
@@ -41,11 +45,11 @@ const getData = async (page) => {
   }
 };
 
-const getSearchData = async (type, searchTerm) => {
+const getSearchData = async (type, searchTerm, pageNumber) => {
   try {
     showSpinner();
     const response = await fetch(
-      `${API_URL}search/${type}?query=${searchTerm}&include_adult=false&language=en-US&page=1&api_key=${API_KEY}`
+      `${API_URL}search/${type}?query=${searchTerm}&include_adult=false&language=en-US&page=${pageNumber}&api_key=${API_KEY}`
     );
 
     if (!response.ok) {
@@ -327,17 +331,82 @@ const fillSearchCards = (type, results) => {
   }
 };
 
+const fillSearchHeading = (numberOfResultsInPage, totalNumberOfResults) => {
+  const searchHeading = document.getElementById("search-results-heading");
+  searchHeading.innerHTML = `<h2 style="text-align: left;">${numberOfResultsInPage} / ${totalNumberOfResults}&nbsp; Results</h2>`;
+};
+
+const fillSearchPageCounter = () => {
+  document.querySelector(".page-counter").innerHTML = `
+  <div class="page-counter">Page ${currentSearchPage} of ${currentMaxPage}</div>
+  `;
+};
+const handlePrevClick = async (e) => {
+  e.preventDefault();
+  if (currentSearchPage > 1) {
+    currentSearchPage = currentSearchPage - 1;
+    const { page, results, total_pages, total_results } = await getSearchData(
+      currentSearchType,
+      currentSearchTerm,
+      currentSearchPage
+    );
+    fillSearchHeading(results.length, total_results);
+    searchResultCardsContainer.innerHTML = "";
+    fillSearchCards(currentSearchType, results);
+    fillSearchPageCounter();
+  }
+};
+
+const handleNextClick = async (e) => {
+  e.preventDefault();
+  if (currentSearchPage < currentMaxPage) {
+    currentSearchPage = currentSearchPage + 1;
+    const { page, results, total_pages, total_results } = await getSearchData(
+      currentSearchType,
+      currentSearchTerm,
+      currentSearchPage
+    );
+    fillSearchHeading(results.length, total_results);
+    searchResultCardsContainer.innerHTML = "";
+    fillSearchCards(currentSearchType, results);
+    fillSearchPageCounter();
+  }
+};
+const addPaginationEventListeners = () => {
+  document.getElementById("prev").addEventListener("click", handlePrevClick);
+  document.getElementById("next").addEventListener("click", handleNextClick);
+};
+
+const addPagination = () => {
+  const paginationDiv = document.createElement("div");
+  paginationDiv.classList.add("pagination");
+  paginationDiv.innerHTML = `
+    <button class="btn btn-primary" id="prev">Prev</button>
+    <button class="btn btn-primary" id="next">Next</button>
+    <div class="page-counter">Page ${currentSearchPage} of ${currentMaxPage}</div>
+  `;
+  document.getElementById("pagination").appendChild(paginationDiv);
+
+  addPaginationEventListeners();
+};
+
 const getAndFillSearch = async () => {
   const searchParams = new URLSearchParams(window.location.search);
   const searchType = searchParams.get("type");
   const searchTerm = searchParams.get("search-term");
+  currentSearchTerm = searchTerm;
+  currentSearchType = searchType;
 
   if (searchTerm && searchTerm !== "") {
-    const { page, results, total_pages } = await getSearchData(
+    const { page, results, total_pages, total_results } = await getSearchData(
       searchType,
-      searchTerm
+      searchTerm,
+      1
     );
+    currentMaxPage = total_pages;
+    fillSearchHeading(results.length, total_results);
     fillSearchCards(searchType, results);
+    total_pages > 1 && addPagination();
   } else {
     alert("Please enter a search term");
   }
